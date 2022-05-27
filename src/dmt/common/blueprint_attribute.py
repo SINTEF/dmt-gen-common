@@ -62,7 +62,7 @@ class BlueprintAttribute:
     @property
     def optional(self) -> bool:
         """Is this a many relation"""
-        return self.content.get("optional",False)
+        return self.content.get("optional",True)
 
     @description.setter
     def description(self, value: str):
