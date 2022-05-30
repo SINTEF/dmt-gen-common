@@ -66,8 +66,11 @@ class BaseGenerator(PackageGenerator):
 
     def __find_templates_and_generate(self, output_dir: Path, config: Dict):
         for path in sorted(output_dir.rglob('*.jinja')):
-            generator = self.generators.get(path.name,BasicTemplateGenerator())
+            generator = self.generators.get(path.name,self.get_basic_generator())
             self.__generate_template(path, generator, config)
+    
+    def get_basic_generator(self) -> TemplateBasedGenerator:
+        return BasicTemplateGenerator()
 
     @staticmethod
     def __read_template(templatefile: Path):

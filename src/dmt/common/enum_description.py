@@ -16,7 +16,7 @@ class EnumDescription:
         values = enum_dict["values"]
         labels = enum_dict["labels"]
         self.enum_values = []
-        self.default = values[0]
+        self.default = enum_dict.get("default",values[0])
         for i, value in enumerate(values):
             self.enum_values.append({
                 "value": value,
