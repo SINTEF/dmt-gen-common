@@ -1,6 +1,8 @@
 {
     "name": "NamedEntity",
     "type": "system/SIMOS/Blueprint",
+    "abstract" : true,
+    "extends" : ["system/SIMOS/Entity"],
     "description": "Describes the required attributes (name, type, description). All other blueprints should extend this one, or implement the attributes itself",
     "attributes": [
         {
