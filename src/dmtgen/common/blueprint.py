@@ -3,8 +3,8 @@ from typing import Dict, Sequence
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .package import Package
-
 from .blueprint_attribute import BlueprintAttribute
+
 
 
 class Blueprint:

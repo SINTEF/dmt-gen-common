@@ -1,9 +1,0 @@
-{
-    "name": "Entity",
-    "type": "system/SIMOS/Blueprint",
-    "abstract" : true,
-    "description": "The root blueprint. All other blueprints should extend this one",
-    "attributes": [],
-    "storageRecipes": [],
-    "uiRecipes": []
-}

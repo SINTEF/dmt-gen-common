@@ -11,14 +11,6 @@
             "attributeType": "string",
             "label": "Name",
             "optional": true
-        },
-        {
-            "name": "description",
-            "type": "system/SIMOS/BlueprintAttribute",
-            "attributeType": "string",
-            "label": "Description",
-            "default": "",
-            "optional": true
         }
     ],
     "storageRecipes": [],

@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Dict
 from jinja2.environment import Template
-from dmt.package_generator import PackageGenerator
-from dmt.common.package import Package
+from .package_generator import PackageGenerator
+from .common.package import Package
 from .template_generator import TemplateBasedGenerator
 
 
@@ -36,7 +36,7 @@ class BasicTemplateGenerator(TemplateBasedGenerator):
 
         model["types"] = etypes
 
-        with open(outputfile, 'w') as file:
+        with open(outputfile, 'w', encoding="UTF8") as file:
             file.write(template.render(model))
 
     @staticmethod

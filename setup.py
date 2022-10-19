@@ -17,14 +17,14 @@ with open('requirements.txt',encoding='utf8') as f:
 
 setup(
     name='dmtgen',
-    version='0.2.3',
+    version='1.0.0.dev0',
     author="SINTEF Ocean",
     description="Python generator utilities for DMT",
     long_description=long_description,
     long_description_content_type="text/markdown",
     package_dir={"": "src"},
     packages= find_packages(where="src"),
-    package_data={'dmt': ['data/system/SIMOS/*.json']},
+    package_data={'dmtgen': ['data/system/SIMOS/*.json']},
     install_requires=required,
     classifiers=[
         "Programming Language :: Python :: 3",

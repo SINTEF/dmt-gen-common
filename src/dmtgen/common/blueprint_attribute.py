@@ -69,8 +69,10 @@ class BlueprintAttribute:
         """Set description"""
         self.__description = str(value)
 
-    def get(self, key, defaultValue=None):
-        return self.content.get(key,defaultValue)
+    def get(self, key, default=None):
+        """Return the content value or an optional default"""
+        return self.content.get(key,default)
 
     def as_dict(self) -> Dict:
+        """Return the attribute as a dictionary"""
         return dict(self.content)

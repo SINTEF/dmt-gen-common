@@ -6,11 +6,10 @@ Base generator
 
 import os
 import shutil
-from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Dict
 import jinja2
-from dmt.common.package import Package
+from dmtgen.common.package import Package
 from .package_generator import PackageGenerator
 from .basic_template_generator import BasicTemplateGenerator
 from .template_generator import TemplateBasedGenerator
@@ -56,7 +55,7 @@ class BaseGenerator(PackageGenerator):
         """Copy template folder to output folder"""
         # First we copy the entire tree structure
         # Then we have the sceleton to convert the files afterwards
-        copy_tree(str(template_root), str(output_dir))
+        shutil.copytree(str(template_root), str(output_dir))
 
     def pre_generate(self,output_dir: Path):
         """ override in subclass """
@@ -68,7 +67,7 @@ class BaseGenerator(PackageGenerator):
         for path in sorted(output_dir.rglob('*.jinja')):
             generator = self.generators.get(path.name,self.get_basic_generator())
             self.__generate_template(path, generator, config)
-    
+
     def get_basic_generator(self) -> TemplateBasedGenerator:
         return BasicTemplateGenerator()
 

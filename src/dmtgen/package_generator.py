@@ -2,7 +2,7 @@
 from abc import ABC
 from typing import Dict
 
-from dmt.common.package import Package
+from .common.package import Package
 
 
 class PackageGenerator(ABC):
