@@ -55,7 +55,7 @@ class BaseGenerator(PackageGenerator):
         """Copy template folder to output folder"""
         # First we copy the entire tree structure
         # Then we have the sceleton to convert the files afterwards
-        shutil.copytree(str(template_root), str(output_dir))
+        shutil.copytree(str(template_root), str(output_dir),  dirs_exist_ok=True)
 
     def pre_generate(self,output_dir: Path):
         """ override in subclass """

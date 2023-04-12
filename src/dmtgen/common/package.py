@@ -15,24 +15,44 @@ class Package:
     """ " A basic SIMOS package"""
 
     def __init__(self, pkg_dir: Path) -> None:
+        self.package_dir = pkg_dir
         self.version = 0
+        self.name = pkg_dir.name
+        self.aliases = {}
+        self.parent = None
+        self.__blueprints = {}
+        self.__enums = {}
+        self.__packages = {}
         self.__read_package(pkg_dir)
 
     def __read_package(self, pkg_dir: Path):
-        self.parent = None
         blueprints = {}
         enums = {}
         self.__blueprints = blueprints
         self.__enums = enums
-        self.__packages = {}
-        self.name = pkg_dir.name
+
+        # First we need to check for a package.json file
+        pkg_filename = "package.json"
+        package_file = pkg_dir / pkg_filename
+        if package_file.exists():
+            package = json.load(open(package_file, encoding="utf-8"))
+            self.__read_package_info(package)
 
         for file in pkg_dir.glob("*.json"):
             entity = json.load(open(file, encoding="utf-8"))
             if file.name == "__versions__.json":
                 self.__read_version(entity)
+            elif file.name == pkg_filename:
+                continue
             else:
-                etype = entity["type"]
+                etype: str = entity["type"]
+                idx=etype.find(":")
+                if idx > 0:
+                    alias = etype[:idx]
+                    adress = self.aliases[alias]
+                    etype = adress + "/" + etype[idx+1:]
+
+
                 if etype == "system/SIMOS/Blueprint":
                     blueprint = Blueprint(entity, self)
                     name = blueprint.name
@@ -42,7 +62,7 @@ class Package:
                     name = enum.name
                     enums[name] = enum
                 else:
-                    raise Exception("Unhandled entity type: " + etype)
+                    raise ValueError("Unhandled entity type: " + etype)
 
         for folder in pkg_dir.glob("*/"):
             if folder.is_dir():
@@ -52,6 +72,18 @@ class Package:
 
     def __read_version(self,versions: dict):
         self.version = versions.get(self.name,None)
+
+    def __read_package_info(self,pkg: dict):
+        self.name=pkg.get("name",self.name)
+        meta=pkg.get("_meta_")
+        if meta:
+            self.version = meta.get("version")
+            deps = meta.get("dependencies",[])
+            for dep in deps:
+                alias = dep.get("alias")
+                if alias:
+                    self.aliases[alias]=dep.get("address")
+
 
     def get_path(self) -> str:
         """ Get full type path to package """
@@ -82,13 +114,13 @@ class Package:
     def blueprint(self, name:str) -> Blueprint:
         bp = self.__blueprints.get(name,None)
         if not bp:
-            raise Exception(f"Blueprint not found \"{name}\" in {self.name}")
+            raise ValueError(f"Blueprint not found \"{name}\" in {self.name}")
         return bp
 
     def enum(self, name:str) -> EnumDescription:
         enum = self.__enums.get(name,None)
         if not enum:
-            raise Exception(f"Enum not found \"{name}\" in {self.name}")
+            raise ValueError(f"Enum not found \"{name}\" in {self.name}")
         return enum
 
 
@@ -101,7 +133,7 @@ class Package:
         """Attributes"""
         pkg = self.__packages.get(name,None)
         if not pkg:
-            raise Exception(f"package not found \"{name}\" in {self.name}")
+            raise ValueError(f"package not found \"{name}\" in {self.name}")
         return pkg
 
     def get_parent(self) -> Package:
@@ -116,6 +148,12 @@ class Package:
 
 
     def get_blueprint(self, path:str) -> Blueprint:
+        idx=path.find(":")
+        if idx > 0:
+            alias = path[:idx]
+            adress = self.aliases[alias]
+            path = adress + "/" + path[idx+1:]
+
         parts = re.split("/",path)
         bp_name = parts.pop()
         package = self.__get_package(parts)
@@ -138,7 +176,7 @@ class Package:
             elif package is None:
                 package = self.get_root()
                 if part != package.name:
-                    raise Exception(f"expected root {package.name} but got {part}")
+                    raise ValueError(f"expected root {package.name} but got {part}")
             else:
                 package = package.package(part)
         return package
