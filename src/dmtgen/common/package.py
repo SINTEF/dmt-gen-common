@@ -18,7 +18,7 @@ class Package:
         self.package_dir = pkg_dir
         self.version = 0
         self.name = pkg_dir.name
-        self.aliases = {}
+        self.aliases = {"core":"system/SIMOS"}
         self.parent = None
         self.__blueprints = {}
         self.__enums = {}
@@ -49,7 +49,9 @@ class Package:
                 idx=etype.find(":")
                 if idx > 0:
                     alias = etype[:idx]
-                    adress = self.aliases[alias]
+                    adress = self.aliases.get(alias,None)
+                    if not adress:
+                        raise ValueError(f"Alias not found \"{alias}\" in {self.name}")
                     etype = adress + "/" + etype[idx+1:]
 
 
