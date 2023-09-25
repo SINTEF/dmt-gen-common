@@ -1,0 +1,25 @@
+{
+  "name": "EmployeeApp",
+  "type": "CORE:Blueprint",
+  "description": "",
+  "attributes": [
+    {
+      "name": "type",
+      "type": "CORE:BlueprintAttribute",
+      "attributeType": "string"
+    },
+    {
+      "name": "label",
+      "type": "CORE:BlueprintAttribute",
+      "attributeType": "string",
+      "optional": true
+    },
+    {
+      "name": "employees",
+      "type": "CORE:BlueprintAttribute",
+      "attributeType": "./Employee",
+      "dimensions": "*",
+      "optional": false
+    }
+  ]
+}

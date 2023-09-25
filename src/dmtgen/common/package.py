@@ -4,6 +4,7 @@
 from __future__ import annotations
 import json
 
+import os
 import re
 from pathlib import Path
 from typing import List, Sequence
@@ -45,16 +46,7 @@ class Package:
             elif file.name == pkg_filename:
                 continue
             else:
-                etype: str = entity["type"]
-                idx=etype.find(":")
-                if idx > 0:
-                    alias = etype[:idx]
-                    adress = self.aliases.get(alias,None)
-                    if not adress:
-                        raise ValueError(f"Alias not found \"{alias}\" in {self.name}")
-                    etype = adress + "/" + etype[idx+1:]
-
-
+                etype = self.resolve_type(entity["type"])
                 if etype == "system/SIMOS/Blueprint":
                     blueprint = Blueprint(entity, self)
                     name = blueprint.name
@@ -85,6 +77,21 @@ class Package:
                 alias = dep.get("alias")
                 if alias:
                     self.aliases[alias]=dep.get("address")
+
+    def resolve_type(self, etype:str) -> str:
+        if etype.startswith("."):
+            # This is a relative path
+            path = self.get_path() + "/" + etype
+            path = os.path.normpath(path).replace("\\","/")
+            return path
+        idx=etype.find(":")
+        if idx > 0:
+            alias = etype[:idx].lower()
+            adress = self.aliases.get(alias,None)
+            if not adress:
+                raise ValueError(f"Alias not found \"{alias}\" in {self.name}")
+            return adress + "/" + etype[idx+1:]
+        return etype
 
 
     def get_path(self) -> str:
@@ -129,7 +136,7 @@ class Package:
     @property
     def packages(self) -> Sequence[Package]:
         """Attributes"""
-        return self.__packages.values()
+        return list(self.__packages.values())
 
     def package(self, name:str) -> Package:
         """Attributes"""
@@ -150,9 +157,11 @@ class Package:
 
 
     def get_blueprint(self, path:str) -> Blueprint:
+        """Get Blueprint from path"""
+        path = self.resolve_type(path)
         idx=path.find(":")
         if idx > 0:
-            alias = path[:idx]
+            alias = path[:idx].lower()
             adress = self.aliases[alias]
             path = adress + "/" + path[idx+1:]
 
@@ -162,6 +171,8 @@ class Package:
         return package.blueprint(bp_name)
 
     def get_enum(self, path:str) -> EnumDescription:
+        """Get enum from path"""
+        path = self.resolve_type(path)
         parts = re.split("/",path)
         enum_name = parts.pop()
         package = self.__get_package(parts)
@@ -170,7 +181,9 @@ class Package:
     def __get_package(self, parts: Sequence[str]) -> Package:
         package: Package = None
         for part in parts:
-            if part == '':
+            if part == '.':
+                raise ValueError("Relative path not allowed. Should have been resolved by now.")
+            elif part == '':
                 package = self.get_root()
             elif part == 'system':
                 from .system_package import system_package
