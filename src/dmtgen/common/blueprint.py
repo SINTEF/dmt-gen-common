@@ -10,7 +10,7 @@ from .blueprint_attribute import BlueprintAttribute
 class Blueprint:
     """ " A basic SIMOS Blueprint"""
 
-    def __init__(self, bp_dict: Dict, parent) -> None:
+    def __init__(self, bp_dict: Dict, parent: Package) -> None:
         self.parent = parent
         self.blueprint = bp_dict
         self.name = self.blueprint["name"]
@@ -18,7 +18,7 @@ class Blueprint:
         self.__abstract = bp_dict.get("abstract",False)
         attributes = {}
         for a_dict in bp_dict.get("attributes",[]):
-            attribute = BlueprintAttribute(a_dict)
+            attribute = BlueprintAttribute(a_dict, self)
             attributes[attribute.name]=attribute
         self.__attributes = attributes
         extends = bp_dict.get("extends",[])
