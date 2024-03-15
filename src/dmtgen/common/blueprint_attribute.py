@@ -10,67 +10,62 @@ class BlueprintAttribute:
 
     def __init__(self, content: Dict, parent_blueprint: Blueprint) -> None:
         self.content = content
-        if "description" not in content:
-            content["description"] = ""
         name = content["name"]
-        if not name:
+        if len(name)==0:
             raise ValueError("Attribute has no name")
         self.name = name
+        if "description" not in content:
+            content["description"] = ""
         self.description = content["description"].replace('"',"'")
-        self.__is_many= "dimensions" in content
-        self.__contained = content.get("contained",True)
+        dims=content.get("dimensions")
+        if dims:
+            self.dimensions = dims.split(",")
+        else:
+            self.dimensions = []
+
         atype = content["attributeType"]
-
+        self.parent = parent_blueprint
         package = parent_blueprint.parent
-        self.__type = package.resolve_type(atype)
-        primitive_types =  ['boolean', 'number', 'string', 'integer']
-        self.__is_primitive = atype in primitive_types
+        self.type = package.resolve_type(atype)
+        self.is_primitive = atype in ['boolean', 'number', 'string', 'integer']
         self.is_enum = self.content.get("enumType",None) is not None
+        self.is_blueprint = not (self.is_primitive or self.is_enum)
+        self.is_optional = self.content.get("optional",True)
+        self.is_array = len(self.dimensions)>0
+        self.is_contained = content.get("contained",True)
 
     @property
-    def name(self) -> str:
-        """Entity id"""
-        return self.__name
-
-    @name.setter
-    def name(self, value: str):
-        """Set name"""
-        self.__name = str(value)
+    def is_string(self) -> bool:
+        """Is this a string"""
+        return self.type == "string"
 
     @property
-    def type(self) -> str:
-        """Attribute type"""
-        return self.__type
+    def is_boolean(self) -> bool:
+        """Is this a boolean"""
+        return self.type == "boolean"
 
     @property
-    def description(self) -> str:
-        """Entity id"""
-        return self.__description
+    def is_integer(self) -> bool:
+        """Is this an integer"""
+        return self.type == "integer"
 
     @property
-    def contained(self) -> bool:
-        """Is contained"""
-        return self.__contained
+    def is_number(self) -> bool:
+        """Is this a number"""
+        return self.type == "number"
 
     @property
-    def is_primitive(self) -> bool:
-        """Is this a primitive attribute"""
-        return self.__is_primitive
+    def is_required(self) -> bool:
+        """Is a required relation"""
+        return not self.is_optional
 
-    @property
-    def is_many(self) -> bool:
-        """Is this a many relation"""
-        return self.__is_many
+    def is_fixed_array(self) -> bool:
+        """Is this a fixed array"""
+        return self.is_array and "*" not in self.dimensions
 
-    @property
-    def optional(self) -> bool:
-        """Is this a many relation"""
-        return self.content.get("optional",True)
-
-    @description.setter
-    def description(self, value: str):
-        """Set description"""
-        self.__description = str(value)
+    def is_variable_array(self) -> bool:
+        """Is this a variable array"""
+        return self.is_array and "*" in self.dimensions
 
     def get(self, key, default=None):
         """Return the content value or an optional default"""

@@ -26,11 +26,12 @@ class BaseGenerator(PackageGenerator):
         self.output_dir = output_dir
         self.source_only = False
         self.root_package = root_package
-        self.generators = self.get_template_generators()
 
-    def get_template_generators(self) -> Dict[str,TemplateBasedGenerator]:
-        """ Override in subclasses """
-        return {}
+    # pylint: disable=unused-argument, no-self-use
+    def get_template_generator(self, template: Path, config: Dict) -> TemplateBasedGenerator:
+        """ Override in subclasses to control which template generator to use"""
+        return BasicTemplateGenerator()
+
 
     def generate_package(self, config: Dict):
         """ Generate package """
@@ -65,11 +66,8 @@ class BaseGenerator(PackageGenerator):
 
     def __find_templates_and_generate(self, output_dir: Path, config: Dict):
         for path in sorted(output_dir.rglob('*.jinja')):
-            generator = self.generators.get(path.name,self.get_basic_generator())
+            generator = self.get_template_generator(path, config)
             self.__generate_template(path, generator, config)
-
-    def get_basic_generator(self) -> TemplateBasedGenerator:
-        return BasicTemplateGenerator()
 
     @staticmethod
     def __read_template(templatefile: Path):
