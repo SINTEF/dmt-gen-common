@@ -1,11 +1,10 @@
+"""Blueprint class for SIMOS"""
 from __future__ import annotations
 from typing import Dict, Sequence
 from typing import TYPE_CHECKING
+from .blueprint_attribute import BlueprintAttribute
 if TYPE_CHECKING:
     from .package import Package
-from .blueprint_attribute import BlueprintAttribute
-
-
 
 class Blueprint:
     """ " A basic SIMOS Blueprint"""
@@ -26,25 +25,6 @@ class Blueprint:
         # We will resolve this later
         self.__extensions = None
 
-    @property
-    def name(self) -> str:
-        """Entity id"""
-        return self.__name
-
-    @name.setter
-    def name(self, value: str):
-        """Set name"""
-        self.__name = str(value)
-
-    @property
-    def description(self) -> str:
-        """Entity id"""
-        return self.__description
-
-    @description.setter
-    def description(self, value: str):
-        """Set description"""
-        self.__description = str(value)
 
     @property
     def abstract(self) -> bool:
@@ -67,8 +47,6 @@ class Blueprint:
         atributes.update(self.__attributes)
         return atributes
 
-
-
     @property
     def extensions(self) -> Sequence[Blueprint]:
         """Extensions"""
@@ -84,11 +62,8 @@ class Blueprint:
 
     def get_path(self):
         """ Get full path to blueprint """
-        parent = self.get_parent()
+        parent = self.parent
         if parent:
             return parent.get_path() + "/" + self.name
         # Then we are at root
         return "/" + self.name
-
-    def get_parent(self) -> Package:
-        return self.parent

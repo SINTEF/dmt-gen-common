@@ -15,12 +15,12 @@ from .blueprint import Blueprint
 class Package:
     """ " A basic SIMOS package"""
 
-    def __init__(self, pkg_dir: Path) -> None:
+    def __init__(self, pkg_dir: Path, parent: Package) -> None:
         self.package_dir = pkg_dir
         self.version = 0
         self.name = pkg_dir.name
         self.aliases = {"core":"system/SIMOS"}
-        self.parent = None
+        self.parent = parent
         self.__blueprints = {}
         self.__enums = {}
         self.__packages = {}
@@ -36,16 +36,15 @@ class Package:
         pkg_filename = "package.json"
         package_file = pkg_dir / pkg_filename
         if package_file.exists():
-            package = json.load(open(package_file, encoding="utf-8"))
-            self.__read_package_info(package)
+            with open(package_file, encoding="utf-8") as file:
+                package = json.load(file)
+                self.__read_package_info(package)
 
         for file in pkg_dir.glob("*.json"):
-            entity = json.load(open(file, encoding="utf-8"))
-            if file.name == "__versions__.json":
-                self.__read_version(entity)
-            elif file.name == pkg_filename:
+            if file.name == pkg_filename:
                 continue
-            else:
+            with open(file, encoding="utf-8") as file:
+                entity = json.load(file)
                 etype = self.resolve_type(entity["type"])
                 if etype == "system/SIMOS/Blueprint":
                     blueprint = Blueprint(entity, self)
@@ -60,7 +59,7 @@ class Package:
 
         for folder in pkg_dir.glob("*/"):
             if folder.is_dir():
-                sub_package = Package(folder)
+                sub_package = Package(folder,self)
                 sub_package.parent = self
                 self.__packages[sub_package.name] = sub_package
 
@@ -79,6 +78,7 @@ class Package:
                     self.aliases[alias]=dep.get("address")
 
     def resolve_type(self, etype:str) -> str:
+        """Resolve type to full path"""
         if etype.startswith("."):
             # This is a relative path
             path = self.get_path() + "/" + etype
@@ -114,19 +114,23 @@ class Package:
 
     @property
     def blueprints(self) -> Sequence[Blueprint]:
+        """All blueprints in package"""
         return self.__blueprints.values()
 
     @property
     def enums(self) -> Sequence[EnumDescription]:
+        """All enums in package"""
         return self.__enums.values()
 
     def blueprint(self, name:str) -> Blueprint:
-        bp = self.__blueprints.get(name,None)
-        if not bp:
+        """Get blueprint by name"""
+        blueprint = self.__blueprints.get(name,None)
+        if not blueprint:
             raise ValueError(f"Blueprint not found \"{name}\" in {self.name}")
-        return bp
+        return blueprint
 
     def enum(self, name:str) -> EnumDescription:
+        """Get enum by name"""
         enum = self.__enums.get(name,None)
         if not enum:
             raise ValueError(f"Enum not found \"{name}\" in {self.name}")
@@ -146,9 +150,11 @@ class Package:
         return pkg
 
     def get_parent(self) -> Package:
+        """Get parent package"""
         return self.parent
 
     def get_root(self):
+        """Get root package"""
         parent: Package = self.parent
         if parent:
             return parent.get_root()
@@ -183,9 +189,10 @@ class Package:
         for part in parts:
             if part == '.':
                 raise ValueError("Relative path not allowed. Should have been resolved by now.")
-            elif part == '':
+            if part == '':
                 package = self.get_root()
             elif part == 'system':
+                # pylint: disable=import-outside-toplevel
                 from .system_package import system_package
                 package =  system_package
             elif package is None:
