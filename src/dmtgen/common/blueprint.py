@@ -9,27 +9,22 @@ if TYPE_CHECKING:
 class Blueprint:
     """ " A basic SIMOS Blueprint"""
 
-    def __init__(self, bp_dict: Dict, parent: Package) -> None:
+    # pylint: disable=too-many-instance-attributes
+    def __init__(self, content: Dict, parent: Package) -> None:
         self.parent = parent
-        self.blueprint = bp_dict
-        self.name = self.blueprint["name"]
-        self.description = bp_dict.get("description","")
-        self.__abstract = bp_dict.get("abstract",False)
+        self.content = content
+        self.name: str = self.content["name"]
+        self.description: str = content.get("description",None)
         attributes = {}
-        for a_dict in bp_dict.get("attributes",[]):
+        for a_dict in content.get("attributes",[]):
             attribute = BlueprintAttribute(a_dict, self)
             attributes[attribute.name]=attribute
+        self.__abstract = content.get("abstract",False)
         self.__attributes = attributes
-        extends = bp_dict.get("extends",[])
-        self.__extends = extends
+        self.__extends = content.get("extends",[])
         # We will resolve this later
         self.__extensions = None
 
-
-    @property
-    def abstract(self) -> bool:
-        """If the blueprint represent an abstract type"""
-        return self.__abstract
 
     @property
     def attributes(self) -> Sequence[BlueprintAttribute]:
@@ -60,10 +55,19 @@ class Blueprint:
         package: Package = self.parent
         return package.get_blueprint(extension)
 
+    def is_abstract(self) -> bool:
+        """If the blueprint represent an abstract type. 
+        In object oriented terms, this would be an interface or abstract class."""
+        return self.__abstract
+
     def get_path(self):
-        """ Get full path to blueprint """
+        """ Get full path to blueprint"""
         parent = self.parent
         if parent:
             return parent.get_path() + "/" + self.name
         # Then we are at root
-        return "/" + self.name
+        return self.name
+
+    def get_attribute(self, name:str) -> BlueprintAttribute:
+        """ Return the attribute if it exists, otherwise None"""
+        return self.all_attributes.get(name,None)
