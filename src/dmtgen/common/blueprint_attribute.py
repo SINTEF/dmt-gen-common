@@ -8,7 +8,8 @@ if TYPE_CHECKING:
 class BlueprintAttribute:
     """ " A basic SIMOS Attribute"""
 
-    def __init__(self, content: Dict, parent_blueprint: Blueprint) -> None:
+    # pylint: disable=too-many-instance-attributes
+    def __init__(self, content: Dict, parent: Blueprint) -> None:
         self.content = content
         name = content["name"]
         if len(name)==0:
@@ -24,48 +25,87 @@ class BlueprintAttribute:
             self.dimensions = []
 
         atype = content["attributeType"]
-        self.parent = parent_blueprint
-        package = parent_blueprint.parent
-        self.type = package.resolve_type(atype)
-        self.is_primitive = atype in ['boolean', 'number', 'string', 'integer']
-        self.is_enum = self.content.get("enumType",None) is not None
-        self.is_blueprint = not (self.is_primitive or self.is_enum)
-        self.is_optional = self.content.get("optional",True)
-        self.is_array = len(self.dimensions)>0
-        self.is_contained = content.get("contained",True)
+        self.__parent = parent
+        package = parent.parent
+        self.__type = package.resolve_type(atype)
+        self.__optional = self.content.get("optional",True)
+        self.__is_primitive = atype in ['boolean', 'number', 'string', 'integer']
+        self.__is_enum = self.content.get("enumType",None) is not None
+        self.__is_blueprint = not (self.__is_primitive or self.__is_enum)
+        self.__is_array = len(self.dimensions)>0
+        self.__is_string = self.type == "string"
+        self.__is_boolean = self.type == "boolean"
+        self.__is_integer = self.type == "integer"
+        self.__is_number = self.type == "number"
+        self.__is_contained = content.get("contained",True)
 
     @property
+    def parent(self) -> Blueprint:
+        """The parent blueprint"""
+        return self.__parent
+
+    @property
+    def type(self) -> str:
+        """The type of the attribute"""
+        return self.__type
+
+    @property
+    def optional(self) -> bool:
+        """Is this an optional attribute"""
+        return self.__optional
+
+    @property
+    def contained(self) -> bool:
+        """Is this a contained attribute"""
+        return self.__is_contained
+
+    def is_primitive(self) -> bool:
+        """Is this a primitive type"""
+        return self.__is_primitive
+
+    def is_enum(self) -> bool:
+        """Is this an enum type"""
+        return self.__is_enum
+
+    def is_blueprint(self) -> bool:
+        """Is this a blueprint type"""
+        return self.__is_blueprint
+
     def is_string(self) -> bool:
         """Is this a string"""
-        return self.type == "string"
+        return self.__is_string
 
-    @property
     def is_boolean(self) -> bool:
         """Is this a boolean"""
-        return self.type == "boolean"
+        return self.__is_boolean
 
-    @property
     def is_integer(self) -> bool:
         """Is this an integer"""
-        return self.type == "integer"
+        return self.__is_integer
 
-    @property
     def is_number(self) -> bool:
         """Is this a number"""
-        return self.type == "number"
+        return self.__is_number
 
-    @property
+    def is_optional(self) -> bool:
+        """Is an optional relation"""
+        return self.__optional
+
     def is_required(self) -> bool:
         """Is a required relation"""
-        return not self.is_optional
+        return not self.__optional
+
+    def is_array(self) -> bool:
+        """Is this an array"""
+        return self.__is_array
 
     def is_fixed_array(self) -> bool:
         """Is this a fixed array"""
-        return self.is_array and "*" not in self.dimensions
+        return self.__is_array and "*" not in self.dimensions
 
     def is_variable_array(self) -> bool:
         """Is this a variable array"""
-        return self.is_array and "*" in self.dimensions
+        return self.__is_array and "*" in self.dimensions
 
     def get(self, key, default=None):
         """Return the content value or an optional default"""

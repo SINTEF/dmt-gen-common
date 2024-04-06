@@ -12,7 +12,5 @@
             "label": "Name",
             "optional": true
         }
-    ],
-    "storageRecipes": [],
-    "uiRecipes": []
+    ]
 }

@@ -7,7 +7,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Sequence,Dict
 
 from .enum_description import EnumDescription
 from .blueprint import Blueprint
@@ -15,7 +15,8 @@ from .blueprint import Blueprint
 class Package:
     """ " A basic SIMOS package"""
 
-    def __init__(self, pkg_dir: Path, parent: Package) -> None:
+    # pylint: disable=too-many-instance-attributes
+    def __init__(self, pkg_dir: Path, parent: Package, config: Dict=None) -> None:
         self.package_dir = pkg_dir
         self.version = 0
         self.name = pkg_dir.name
@@ -24,6 +25,13 @@ class Package:
         self.__blueprints = {}
         self.__enums = {}
         self.__packages = {}
+        self.__dependencies = {}
+        if parent is None and config is not None:
+            # This is a root package and we might have dependencies
+            dependencies: dict = config.get('dependencies', {})
+            for alias,location in dependencies.items():
+                self.__dependencies[alias] = Package(Path(location),None)
+
         self.__read_package(pkg_dir)
 
     def __read_package(self, pkg_dir: Path):
@@ -36,6 +44,7 @@ class Package:
         pkg_filename = "package.json"
         package_file = pkg_dir / pkg_filename
         if package_file.exists():
+            # Use with to ensure file is closed
             with open(package_file, encoding="utf-8") as file:
                 package = json.load(file)
                 self.__read_package_info(package)
@@ -43,19 +52,23 @@ class Package:
         for file in pkg_dir.glob("*.json"):
             if file.name == pkg_filename:
                 continue
-            with open(file, encoding="utf-8") as file:
-                entity = json.load(file)
-                etype = self.resolve_type(entity["type"])
-                if etype == "system/SIMOS/Blueprint":
-                    blueprint = Blueprint(entity, self)
-                    name = blueprint.name
-                    blueprints[name] = blueprint
-                elif etype == "system/SIMOS/Enum":
-                    enum = EnumDescription(entity, self)
-                    name = enum.name
-                    enums[name] = enum
-                else:
-                    raise ValueError("Unhandled entity type: " + etype)
+
+            if file.name == "__versions__.json":
+                self.__read_version(entity)
+            else:
+                with open(file, encoding="utf-8") as file:
+                    entity = json.load(file)
+                    etype = self.resolve_type(entity["type"])
+                    if etype == "system/SIMOS/Blueprint":
+                        blueprint = Blueprint(entity, self)
+                        name = blueprint.name
+                        blueprints[name] = blueprint
+                    elif etype == "system/SIMOS/Enum":
+                        enum = EnumDescription(entity, self)
+                        name = enum.name
+                        enums[name] = enum
+                    else:
+                        raise ValueError("Unhandled entity type: " + etype)
 
         for folder in pkg_dir.glob("*/"):
             if folder.is_dir():
@@ -87,9 +100,7 @@ class Package:
         idx=etype.find(":")
         if idx > 0:
             alias = etype[:idx].lower()
-            adress = self.aliases.get(alias,None)
-            if not adress:
-                raise ValueError(f"Alias not found \"{alias}\" in {self.name}")
+            adress = self.aliases.get(alias,alias)
             return adress + "/" + etype[idx+1:]
         return etype
 
@@ -153,7 +164,7 @@ class Package:
         """Get parent package"""
         return self.parent
 
-    def get_root(self):
+    def get_root(self) -> Package:
         """Get root package"""
         parent: Package = self.parent
         if parent:
@@ -190,15 +201,20 @@ class Package:
             if part == '.':
                 raise ValueError("Relative path not allowed. Should have been resolved by now.")
             if part == '':
-                package = self.get_root()
-            elif part == 'system':
+                continue
+            if part == 'system':
                 # pylint: disable=import-outside-toplevel
                 from .system_package import system_package
                 package =  system_package
             elif package is None:
-                package = self.get_root()
-                if part != package.name:
-                    raise ValueError(f"expected root {package.name} but got {part}")
+                # Use the root package to resolve
+                root_package: Package = self.get_root()
+                if part == root_package.name:
+                    package = root_package
+                else:
+                    package = root_package.__dependencies.get(part,None)
+                    if not package:
+                        raise ValueError(f"Package not found \"{part}\" in {root_package.name} or dependencies.")
             else:
                 package = package.package(part)
         return package

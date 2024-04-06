@@ -27,7 +27,7 @@ class BaseGenerator(PackageGenerator):
         self.source_only = False
         self.root_package = root_package
 
-    # pylint: disable=unused-argument, no-self-use
+    # pylint: disable=unused-argument
     def get_template_generator(self, template: Path, config: Dict) -> TemplateBasedGenerator:
         """ Override in subclasses to control which template generator to use"""
         return BasicTemplateGenerator()
@@ -72,10 +72,10 @@ class BaseGenerator(PackageGenerator):
     @staticmethod
     def __read_template(templatefile: Path):
         loader = jinja2.FileSystemLoader(templatefile.parents[0])
-        env_parameters = dict(
-            loader=loader,
-            undefined=jinja2.StrictUndefined
-        )
+        env_parameters = {
+            "loader": loader,
+            "undefined":jinja2.StrictUndefined
+        }
         environment = jinja2.Environment(**env_parameters)
         environment.filters["escape_string"] = escape_string
         return environment.get_template(templatefile.name)
