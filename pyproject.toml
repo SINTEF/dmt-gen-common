@@ -1,0 +1,26 @@
+[project]
+name = "dmtgen"
+version = "0.5.0.dev3"
+description = "Common Python generator utilities for DMT based models"
+authors = [
+    {name = "Lasse Bjermeland", email = "lasse.bjermeland@sintef.no"},
+]
+requires-python = "~=3.8"
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+readme = "README.md"
+dynamic = ["dependencies","optional-dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+
+[build-system]
+requires = [
+  "setuptools",
+  "wheel",
+]
+build-backend = "setuptools.build_meta"
