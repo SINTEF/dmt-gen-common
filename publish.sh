@@ -1,6 +1,6 @@
 set -e
 
-python setup.py clean --all sdist bdist_wheel
+python -m build --wheel --sdist
 
 if $PUBLISH_LIB; then
     python -m twine upload dist/* --config-file .pypirc
