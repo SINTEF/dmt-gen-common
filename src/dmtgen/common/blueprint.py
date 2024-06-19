@@ -48,12 +48,19 @@ class Blueprint:
         if self.__extensions is not None:
             return self.__extensions
 
-        self.__extensions =  [self.__resolve(extension) for extension in self.__extends]
+        self.__extensions =  [self.__resolve_extension(extension) for extension in self.__extends]
         return self.__extensions
 
-    def __resolve(self,extension: str):
+    def resolve(self):
+        """ Resolve all attributes"""
+        for attribute in self.__attributes.values():
+            attribute.resolve()
+
+
+    def __resolve_extension(self,extension: str):
         package: Package = self.parent
-        return package.get_blueprint(extension)
+        resolved = package.resolve_type(extension)
+        return package.get_blueprint(resolved)
 
     def is_abstract(self) -> bool:
         """If the blueprint represent an abstract type. 

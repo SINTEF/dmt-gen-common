@@ -26,11 +26,11 @@ class BlueprintAttribute:
 
         atype = content["attributeType"]
         self.__parent = parent
-        package = parent.parent
-        self.__type = package.resolve_type(atype)
+        self.__type = atype
         self.__optional = self.content.get("optional",True)
         self.__is_primitive = atype in ['boolean', 'number', 'string', 'integer']
-        self.__is_enum = self.content.get("enumType",None) is not None
+        self.enum_type = self.content.get("enumType",None)
+        self.__is_enum = self.enum_type is not None
         self.__is_blueprint = not (self.__is_primitive or self.__is_enum)
         self.__is_array = len(self.dimensions)>0
         self.__is_string = self.type == "string"
@@ -38,6 +38,13 @@ class BlueprintAttribute:
         self.__is_integer = self.type == "integer"
         self.__is_number = self.type == "number"
         self.__is_contained = content.get("contained",True)
+
+    def resolve(self):
+        """ Resolve to correct type"""
+        package = self.parent.parent
+        self.__type = package.resolve_type(self.__type)
+        if self.enum_type:
+            self.enum_type = package.resolve_type(self.enum_type)
 
     @property
     def parent(self) -> Blueprint:
