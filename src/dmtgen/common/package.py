@@ -33,6 +33,15 @@ class Package:
                 self.__dependencies[alias] = Package(Path(location),None)
 
         self.__read_package(pkg_dir)
+        if parent is None:
+            self.resolve()
+
+    def resolve(self):
+        """ Resolve all references in package and subpackages"""
+        for blueprint in self.blueprints:
+            blueprint.resolve()
+        for package in self.packages:
+            package.resolve()
 
     def __read_package(self, pkg_dir: Path):
         blueprints = {}
@@ -175,13 +184,6 @@ class Package:
 
     def get_blueprint(self, path:str) -> Blueprint:
         """Get Blueprint from path"""
-        path = self.resolve_type(path)
-        idx=path.find(":")
-        if idx > 0:
-            alias = path[:idx].lower()
-            adress = self.aliases[alias]
-            path = adress + "/" + path[idx+1:]
-
         parts = re.split("/",path)
         bp_name = parts.pop()
         package = self.__get_package(parts)
@@ -189,7 +191,6 @@ class Package:
 
     def get_enum(self, path:str) -> EnumDescription:
         """Get enum from path"""
-        path = self.resolve_type(path)
         parts = re.split("/",path)
         enum_name = parts.pop()
         package = self.__get_package(parts)
